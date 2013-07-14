@@ -26,6 +26,9 @@ var program = require('commander');
 var cheerio = require('cheerio');
 var HTMLFILE_DEFAULT = "index.html";
 var CHECKSFILE_DEFAULT = "checks.json";
+var URL_DEFAULT = "http://stark-fjord-4523.herokuapp.com/index.html";
+
+var rest = require('restler');
 
 var assertFileExists = function(infile) {
     var instr = infile.toString();
@@ -63,10 +66,23 @@ var clone = function(fn) {
 
 if(require.main == module) {
     program
-        .option('-c, --checks <check_file>', 'Path to checks.json', clone(assertFileExists), CHECKSFILE_DEFAULT)
         .option('-f, --file <html_file>', 'Path to index.html', clone(assertFileExists), HTMLFILE_DEFAULT)
+        .option('-c, --checks <check_file>', 'Path to checks.json', clone(assertFileExists), CHECKSFILE_DEFAULT)
+	.option('-u, --url <url_link>', 'Link to index.html', URL_DEFAULT)
         .parse(process.argv);
-    var checkJson = checkHtmlFile(program.file, program.checks);
+
+	var checkFile;
+	
+	//define which file to use for checking.  The next step would depend on the result
+	if(program.file.length > 0)
+		checkFile = program.checks;
+	else if(program.url.length > 0)
+		//download url to file
+		checkFile = rest.get(program.url);
+
+	
+    var checkJson = checkHtmlFile(program.file, checkFile);
+
     var outJson = JSON.stringify(checkJson, null, 4);
     console.log(outJson);
 } else {
